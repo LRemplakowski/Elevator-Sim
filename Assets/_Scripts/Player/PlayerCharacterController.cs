@@ -2,9 +2,9 @@ using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace SunsetSystems.Input
+namespace SunsetSystems.Player
 {
-    public class PlayerInputHandler : SerializedMonoBehaviour
+    public class PlayerCharacterController : SerializedMonoBehaviour
     {
         [Title("Rferences")]
         [SerializeField, Required]
@@ -15,6 +15,8 @@ namespace SunsetSystems.Input
         [Title("Config")]
         [SerializeField, Min(0.01f)]
         private float _playerMoveSpeed = 2f;
+        [SerializeField]
+        private LayerMask _autoParentToLayers;
 
         [Title("Runtime")]
         [ShowInInspector, ReadOnly]
@@ -23,12 +25,28 @@ namespace SunsetSystems.Input
         private void Update()
         {
             float timeDelta = Time.deltaTime;
-            MovePlayer(InputMovementVectorToCharacterMovementVector(_playerMoveVector), _playerMoveSpeed, timeDelta);
+            MovePlayer(timeDelta);
+            ParentPlayerToGround();
         }
 
-        private void MovePlayer(Vector3 movementDirection, float movementSpeed, float deltaTime)
+        private void ParentPlayerToGround()
         {
-            _playerCharacterController.Move(deltaTime * movementSpeed * movementDirection);
+            if (Physics.Raycast(_playerCameraTransform.position, Vector3.down, out RaycastHit hit, _autoParentToLayers))
+            {
+                _playerCharacterController.transform.SetParent(hit.collider.transform);
+            }
+            else
+            {
+                _playerCharacterController.transform.SetParent(null);
+            }    
+        }
+
+        private void MovePlayer(float deltaTime)
+        {
+            Vector3 movementThisFrame = InputMovementVectorToCharacterMovementVector(_playerMoveVector);
+            movementThisFrame *= _playerMoveSpeed;
+            movementThisFrame += Physics.gravity;
+            _playerCharacterController.Move(deltaTime * movementThisFrame);
         }
 
         private Vector3 InputMovementVectorToCharacterMovementVector(Vector2 moveInput)
