@@ -8,5 +8,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Scenes/Twin Elevators.unity
     guid: 99c9720ab356a0642a771bea13969a05
-  m_configObjects: {}
+  m_configObjects:
+    com.unity.input.settings: {fileID: 11400000, guid: 6afc3d28c1a5dd34e85d87fe01c1b0f3,
+      type: 2}
   m_UseUCBPForAssetBundles: 0

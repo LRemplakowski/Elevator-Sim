@@ -21,9 +21,11 @@ namespace SunsetSystems.Elevators
         [SerializeField, DictionaryDrawerSettings(KeyLabel = "Level", ValueLabel = "Position")]
         private Dictionary<int, Vector3> _elevatorLevels = new();
 
+        public IEnumerable<int> ElevatorLevels => _elevatorLevels.Keys;
+
         [Title("Runtime")]
-        [ShowInInspector, ReadOnly]
-        private bool _elevatorInMove = false;
+        [field: ShowInInspector, ReadOnly]
+        public bool ElevatorInMove { get; private set; }
 
         private IEnumerator _moveElevatorCoroutine = null;
 
@@ -31,7 +33,7 @@ namespace SunsetSystems.Elevators
         [Button]
         public void MoveToLevel(int level)
         {
-            if (_elevatorInMove)
+            if (ElevatorInMove)
                 return;
             if (_elevatorLevels.TryGetValue(level, out Vector3 value))
             {
@@ -48,16 +50,16 @@ namespace SunsetSystems.Elevators
             {
                 yield break;
             }
-            _elevatorInMove = true;
+            ElevatorInMove = true;
             _invisibleWalls.SetActive(true);
-            while (_elevatorInMove)
+            while (ElevatorInMove)
             {
                 Vector3 positionDelta = position - _elevatorPlatform.transform.localPosition;
                 Vector3 movementDelta = _elevatorSpeed * Time.deltaTime * positionDelta.normalized;
                 movementDelta = movementDelta.magnitude > positionDelta.magnitude ? positionDelta : movementDelta;
                 _elevatorPlatform.MovePosition(_elevatorPlatform.position + movementDelta);
                 if (_elevatorPlatform.transform.localPosition.Equals(position))
-                    _elevatorInMove = false;
+                    ElevatorInMove = false;
                 yield return null;
             }
             _invisibleWalls.SetActive(false);
