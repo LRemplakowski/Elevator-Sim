@@ -9,9 +9,9 @@ using UnityEngine.UI;
 
 namespace SunsetSystems.Elevators
 {
-    public class ElevatorLevelSelectionController : SerializedMonoBehaviour
+    public class ElevatorLevelSelectionUI : SerializedMonoBehaviour
     {
-        public static ElevatorLevelSelectionController Instance { get; private set; }
+        public static ElevatorLevelSelectionUI Instance { get; private set; }
 
         [Title("References")]
         [SerializeField, Required]
@@ -44,8 +44,7 @@ namespace SunsetSystems.Elevators
 
         public void ShowLevelSelection(IEnumerable<int> levels, ElevatorControlPanel controlPanel)
         {
-            if (_currentControlPanel != null)
-                Cleanup();
+            Cleanup();
             _currentControlPanel = controlPanel;
             foreach (int level in levels)
             {
@@ -73,6 +72,7 @@ namespace SunsetSystems.Elevators
                 time += Time.deltaTime;
                 yield return null;
             }
+            _canvasGroup.alpha = targetAlpha;
             _lerpUIAplhaCoroutine = null;
             onCoroutineComplete?.Invoke();
         }

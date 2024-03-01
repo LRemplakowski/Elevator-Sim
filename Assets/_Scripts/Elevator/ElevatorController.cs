@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
+using UltEvents;
 using UnityEngine;
 
 namespace SunsetSystems.Elevators
@@ -11,19 +12,20 @@ namespace SunsetSystems.Elevators
 
         [Title("References")]
         [SerializeField, Required]
-        private Rigidbody _elevatorPlatform;
-        [SerializeField, Required]
-        private GameObject _invisibleWalls;
+        private Transform _elevatorPlatform;
 
         [Title("Config")]
         [SerializeField, Min(0.1f)]
         private float _elevatorSpeed = 3f;
         [SerializeField, DictionaryDrawerSettings(KeyLabel = "Level", ValueLabel = "Position")]
         private Dictionary<int, Vector3> _elevatorLevels = new();
-
         public IEnumerable<int> ElevatorLevels => _elevatorLevels.Keys;
 
-        [Title("Runtime")]
+        [Title("Events")]
+        public UltEvent OnElevatorMoveStart = new();
+        public UltEvent OnElevatorMoveEnd = new();
+
+        [field: Title("Runtime")]
         [field: ShowInInspector, ReadOnly]
         public bool ElevatorInMove { get; private set; }
 
@@ -39,30 +41,32 @@ namespace SunsetSystems.Elevators
             {
                 if (_moveElevatorCoroutine != null)
                     StopCoroutine(_moveElevatorCoroutine);
-                _moveElevatorCoroutine = MoveElevatorPlatformToPosition(value);
+                _moveElevatorCoroutine = MoveElevatorPlatformToPosition(transform.TransformPoint(value));
                 StartCoroutine(_moveElevatorCoroutine);
             }
         }
 
         private IEnumerator MoveElevatorPlatformToPosition(Vector3 position)
         {
-            if (_elevatorPlatform.transform.localPosition.Equals(position))
+            if (Mathf.Approximately((position - _elevatorPlatform.position).magnitude, 0f))
             {
+                ElevatorInMove = false;
                 yield break;
             }
             ElevatorInMove = true;
-            _invisibleWalls.SetActive(true);
+            OnElevatorMoveStart?.InvokeSafe();
+            yield return new WaitForFixedUpdate();
             while (ElevatorInMove)
             {
-                Vector3 positionDelta = position - _elevatorPlatform.transform.localPosition;
-                Vector3 movementDelta = _elevatorSpeed * Time.deltaTime * positionDelta.normalized;
+                Vector3 positionDelta = position - _elevatorPlatform.position;
+                Vector3 movementDelta = _elevatorSpeed * Time.fixedDeltaTime * positionDelta.normalized;
                 movementDelta = movementDelta.magnitude > positionDelta.magnitude ? positionDelta : movementDelta;
-                _elevatorPlatform.MovePosition(_elevatorPlatform.position + movementDelta);
-                if (_elevatorPlatform.transform.localPosition.Equals(position))
+                _elevatorPlatform.transform.position = _elevatorPlatform.position + movementDelta;
+                if (Mathf.Approximately(movementDelta.magnitude, 0f))
                     ElevatorInMove = false;
-                yield return null;
+                yield return new WaitForFixedUpdate();
             }
-            _invisibleWalls.SetActive(false);
+            OnElevatorMoveEnd?.InvokeSafe();
         }
     }
 }

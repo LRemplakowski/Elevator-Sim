@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using SunsetSystems.Interaction;
 using UnityEngine;
@@ -42,8 +40,12 @@ namespace SunsetSystems.Player
                     {
                         if (_currentInteractable != null)
                             _currentInteractable.IsInteractionTarget = false;
-                        hitInteractable.IsInteractionTarget = true;
-                        _currentInteractable = hitInteractable;
+                        _currentInteractable = null;
+                        if (hitInteractable.CanBeInteractedWith)
+                        {
+                            hitInteractable.IsInteractionTarget = true;
+                            _currentInteractable = hitInteractable;
+                        }
                     }
                 }
             }

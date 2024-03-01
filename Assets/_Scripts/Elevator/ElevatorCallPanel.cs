@@ -1,12 +1,13 @@
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
+using System.Linq;
 using Sirenix.OdinInspector;
+using SunsetSystems.Elevators;
 using SunsetSystems.Interaction;
 using UnityEngine;
 
-namespace SunsetSystems.Elevators
+namespace SunsetSystems.Elevator
 {
-    public class ElevatorControlPanel : SerializedMonoBehaviour, IInteractable
+    public class ElevatorCallPanel : SerializedMonoBehaviour, IInteractable
     {
         [Title("References")]
         [SerializeField, Required]
@@ -15,6 +16,8 @@ namespace SunsetSystems.Elevators
         private ElevatorController _elevatorController;
 
         [Title("Config")]
+        [SerializeField, ValueDropdown("GetElevatorLevels")]
+        private int _correspondingElevatorLevel = 0;
         [SerializeField]
         private Color _panelHighlightedColor = Color.green;
         [SerializeField]
@@ -40,12 +43,12 @@ namespace SunsetSystems.Elevators
         }
         [ShowInInspector, ReadOnly]
         private bool _canBeInteractedWith = true;
-        public bool CanBeInteractedWith 
-        { 
+        public bool CanBeInteractedWith
+        {
             get
             {
                 return _canBeInteractedWith;
-            }   
+            }
             set
             {
                 _canBeInteractedWith = value;
@@ -53,17 +56,21 @@ namespace SunsetSystems.Elevators
                     IsInteractionTarget = false;
             }
         }
-        [field: ShowInInspector, ReadOnly]
-        public int SelectedLevel { get; set; }
 
         private IEnumerator _panelColorLerpCoroutine = null;
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "<Pending>")]
+        private int[] GetElevatorLevels()
+        {
+            return _elevatorController?.ElevatorLevels.ToArray() ?? new int[0];
+        }
 
         private void ShowInteractionUI(bool show)
         {
             if (show)
-                ElevatorLevelSelectionUI.Instance.ShowLevelSelection(_elevatorController.ElevatorLevels, this);
+                ElevatorCallToFloorUI.Instance.ShowLevelSelection(this);
             else
-                ElevatorLevelSelectionUI.Instance.HideLevelSelection();
+                ElevatorCallToFloorUI.Instance.HideLevelSelection();
         }
 
         private void UpdatePanelColor(Color newColor)
@@ -92,7 +99,7 @@ namespace SunsetSystems.Elevators
         {
             if (_elevatorController.ElevatorInMove is false)
             {
-                _elevatorController.MoveToLevel(SelectedLevel);
+                _elevatorController.MoveToLevel(_correspondingElevatorLevel);
                 return true;
             }
             return false;
